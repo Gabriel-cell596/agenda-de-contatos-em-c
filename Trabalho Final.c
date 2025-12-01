@@ -5,7 +5,7 @@
 #define TAM 100
 
 typedef struct {
-    int id;
+    int id; 
     char nome[TAM];
     char telefone[20];
     char email[TAM];
@@ -13,7 +13,7 @@ typedef struct {
 
 Contatos lista[TAM];
 int totalContatos = 0;
-int proximoId = 1;
+int proxId = 1;
 
 void limparBuffer() {
     int c;
@@ -21,7 +21,11 @@ void limparBuffer() {
 }
 
 void limparTela() {
-    system("cls");
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
 }
 
 void carregarContatos() {
@@ -63,7 +67,7 @@ void salvarContatos() {
 
 void atualizarProximoId() {
     if(totalContatos == 0) {
-        proximoId = 1;
+        proxId = 1;
     }else{
         int maiorId = lista[0].id;
         for(int i = 1; i < totalContatos; i++) {
@@ -71,20 +75,8 @@ void atualizarProximoId() {
                 maiorId = lista[i].id;
             }
         }
-        proximoId = maiorId + 1;
+        proxId = maiorId + 1;
     }
-}
-
-void menu() {
-    printf("========= Contatos (%d) =========\n", totalContatos);
-    printf("1 - Inserir contato.\n");
-    printf("2 - Listar contatos.\n");
-    printf("3 - Buscar contato.\n");
-    printf("4 - Editar contato.\n");
-    printf("5 - Excluir contato.\n");
-    printf("6 - Salvar e Sair.\n");
-    printf("\n");
-    printf("    Escolha uma opcao: ");
 }
 
 void cadastrarContato() {
@@ -99,21 +91,29 @@ void cadastrarContato() {
     printf("Entre com o nome: ");
     fgets(lista[totalContatos].nome, TAM, stdin);
     lista[totalContatos].nome[strcspn(lista[totalContatos].nome, "\n")] = '\0';
-
+    char *ptr = strchr(lista[totalContatos].nome, ',');
+    if (ptr != NULL) {
+        *ptr = '.';
+    }
     printf("Entre com o numero: ");
     fgets(lista[totalContatos].telefone, 20, stdin);
     lista[totalContatos].telefone[strcspn(lista[totalContatos].telefone, "\n")] = '\0';
 
-    printf("Entre com o email: ");
+    printf("Entre com o email (NAO PODE CONTER VIRGULA): ");
     fgets(lista[totalContatos].email, TAM, stdin);
     lista[totalContatos].email[strcspn(lista[totalContatos].email, "\n")] = '\0';
-
-    lista[totalContatos].id = proximoId;
-    proximoId++;
+    char *ptrEmail = strchr(lista[totalContatos].email, ',');
+    if (ptrEmail != NULL) {
+        *ptrEmail = '.';
+    }
+    lista[totalContatos].id = proxId;
+    proxId++;
     totalContatos++;
 
+    salvarContatos();
     printf("\nCadastrado com sucesso!\n");
     getchar();
+
 }
 
 void listarContatos() {
@@ -124,17 +124,16 @@ void listarContatos() {
         getchar();
         return;
     }
-    printf("===== Lista de contatos =====\n");
+    printf("---------------------------------------------Lista de contatos-----------------------------------------------\n");
     for(int i = 0; i < totalContatos; i++) {
-        printf("Contato numero %d:\n", i+1);
-        printf("ID: %d\n", lista[i].id);
-        printf("Nome: %s\n", lista[i].nome);
-        printf("Numero: %s\n", lista[i].telefone);
-        printf("E-mail: %s\n", lista[i].email);
-        printf("--------------------------\n");
+        printf("| %-5s| %-45s| %-20s| %-30s|\n", "ID", "Nome", "Telefone", "E-mail");
+        printf("| %-5d| %-45s| %-20s| %-30s|\n", lista[i].id, lista[i].nome, lista[i].telefone, lista[i].email);
+        printf("-------------------------------------------------------------------------------------------------------------\n");
     }
+    printf("Pressione ENTER pra continuar...");
     getchar();
 }
+
 void buscarContato() {
     limparTela();
     char busca[TAM];
@@ -158,20 +157,19 @@ void buscarContato() {
         }
         if(bate==1) {
         count++;
-        printf("--------Contato encontrado-------\n");
-        printf("ID: %d\n", lista[i].id);
-        printf("Nome: %s\n", lista[i].nome);
-        printf("Telefone: %s\n", lista[i].telefone);
-        printf("Email: %s\n", lista[i].email);
-        printf("--------------------------\n");
+        printf("--------------------------------------------Contatos encontrados---------------------------------------------\n");
+        printf("| %-5s| %-45s| %-20s| %-30s|\n", "ID", "Nome", "Telefone", "E-mail");
+        printf("| %-5d| %-45s| %-20s| %-30s|\n", lista[i].id, lista[i].nome, lista[i].telefone, lista[i].email);
+        printf("-------------------------------------------------------------------------------------------------------------\n");
     }
     }
     if(count == 0) {
-        printf("Nenhum contato encontrado!!!\n");
+        printf("Nenhum contato encontrado!\n");
     }
     printf("Pressione ENTER para voltar...");
     getchar();
 }
+
 void editarContato() {
     limparTela();
     if(totalContatos == 0) {
@@ -183,24 +181,20 @@ void editarContato() {
     printf("Entre com o nome ou numero ou email do contato a ser editado: ");
     fgets(busca, sizeof(busca), stdin); 
     busca[strcspn(busca, "\n")] = '\0';
-    printf("--------Contatos encontradas-------\n");
+    printf("--------------------------------------------Contatos encontrados---------------------------------------------\n");
     int encontrado = 0;
     for(int i = 0; i < totalContatos; i++) {
         if(strstr(lista[i].nome, busca) != NULL ||
             strstr(lista[i].telefone, busca) != NULL ||
             strstr(lista[i].email, busca) != NULL) {
             encontrado = 1;
-            printf("ID: %d\n", lista[i].id);
-            printf("Nome: %s\n", lista[i].nome);
-            printf("Telefone: %s\n", lista[i].telefone);
-            printf("Email: %s\n", lista[i].email);
-            printf("--------------------------\n");
-            printf("Pressione ENTER para continuar...");
-            getchar();
+            printf("| %-5s| %-45s| %-20s| %-30s|\n", "ID", "Nome", "Telefone", "E-mail");
+            printf("| %-5d| %-45s| %-20s| %-30s|\n", lista[i].id, lista[i].nome, lista[i].telefone, lista[i].email);
+            printf("-------------------------------------------------------------------------------------------------------------\n");
         }
     }
     if(encontrado==0) {
-        printf("Nenhum contato encontrado com os dados fornecidos!\n");
+        printf("Nenhum contato encontrado!!!\n");
         printf("Pressione ENTER para voltar...");
         getchar();
         return;
@@ -208,8 +202,7 @@ void editarContato() {
 
     int idDigitado = 0, indice = -1;
     char novoNome[TAM], novoEmail[TAM], novoTelefone[20];
-    limparTela();
-    printf("Entre com o ID do contato a ser editado: ");
+    printf("Entre com o ID do contato a ser editado (Digite 0 em caso de desistencia): ");
     scanf("%d", &idDigitado);
     if(idDigitado == 0) {
         printf("Operacao cancelada!\n");
@@ -240,6 +233,10 @@ void editarContato() {
                 printf("Entre com o novo nome: ");
                 fgets(novoNome, TAM, stdin);
                 novoNome[strcspn(novoNome, "\n")] = '\0';
+                char *ptr = strchr(lista[totalContatos].nome, ',');
+                if (ptr != NULL) {
+                   *ptr = '.';
+                }
                 strcpy(lista[indice].nome, novoNome);
                 printf("Nome atualizado\nPressione ENTER para continuar...");
                 getchar();
@@ -253,9 +250,13 @@ void editarContato() {
                 getchar();
                 break;
             case 3:
-                printf("Entre com o novo email: ");
+                printf("Entre com o novo email (NAO PODE CONTER VIRGULA): ");
                 fgets(novoEmail, TAM, stdin);
                 novoEmail[strcspn(novoEmail, "\n")] = '\0';
+                char *ptrEmail = strchr(lista[totalContatos].email, ',');
+                if (ptrEmail != NULL) {
+                    *ptrEmail = '.';
+                }
                 strcpy(lista[indice].email, novoEmail);
                 printf("Email atualizado\nPressione ENTER para continuar...");
                 getchar();
@@ -270,25 +271,89 @@ void editarContato() {
         printf("Pressione ENTER para voltar...");
         getchar();
         return;
-    }
+    } 
 }
+
 void excluirContato() {
-
+    limparTela();
+    if(totalContatos == 0) {
+        printf("Lista vazia!\n");
+        getchar();
+        return;
+    }
+    char busca[TAM];
+    printf("Entre com o nome ou numero ou email do contato a ser excluido: ");
+    fgets(busca, sizeof(busca), stdin); 
+    busca[strcspn(busca, "\n")] = '\0';
+    printf("--------------------------------------------Contatos encontrados---------------------------------------------\n");
+    int encontrado = 0;
+    for(int i = 0; i < totalContatos; i++) {
+        if(strstr(lista[i].nome, busca) != NULL ||
+            strstr(lista[i].telefone, busca) != NULL ||
+            strstr(lista[i].email, busca) != NULL) {
+            encontrado = 1;
+            printf("| %-5s| %-45s| %-20s| %-30s|\n", "ID", "Nome", "Telefone", "E-mail");
+            printf("| %-5d| %-45s| %-20s| %-30s|\n", lista[i].id, lista[i].nome, lista[i].telefone, lista[i].email);
+            printf("-------------------------------------------------------------------------------------------------------------\n");
+        }
+    }
+    if(encontrado==0) {
+        printf("Nenhum contato encontrado com os dados fornecidos!\n");
+        printf("Pressione ENTER para voltar...");
+        getchar();
+        return;
+    } else {
+        printf("Entre com o ID do contato a ser excluido (Digite 0 em caso de desistencia): ");
+        int idDigitado;
+        scanf("%d", &idDigitado);
+        limparBuffer();
+        if(idDigitado == 0) {
+            printf("Operacao cancelada!\n");
+            printf("Pressione ENTER para voltar...");
+            getchar();
+            return;
+        }
+        int indice = -1;
+        for(int i = 0; i < totalContatos; i++) {
+            if(lista[i].id == idDigitado) {
+                indice = i;
+                break;
+            }
+        }
+        if(indice != -1) {
+            for(int i = indice; i < totalContatos - 1; i++) {
+                lista[i] = lista[i + 1];
+            }
+            totalContatos--;
+            printf("Contato excluido com sucesso!\n");
+            salvarContatos();
+        } else {
+            printf("Contato com ID %d nao encontrado!\n", idDigitado);
+        }
+    }
+    printf("Pressione ENTER para voltar...");
+    getchar();
 }
-int main() {
-    carregarContatos();
-    atualizarProximoId();
-    int op;
 
+void menu() {
+    int op;
     do {
         limparTela();
-        menu();
+        printf("========= Contatos (%d) =========\n", totalContatos);
+        printf("1 - Inserir contato.\n");
+        printf("2 - Listar contatos.\n");
+        printf("3 - Buscar contato.\n");
+        printf("4 - Editar contato.\n");
+        printf("5 - Excluir contato.\n");
+        printf("6 - Salvar e Sair.\n");
+        printf("\n");
+        printf("    Escolha uma opcao: ");
 
         if (scanf("%d", &op) == 1) {
              limparBuffer();
         } else {
              limparBuffer();
-             op = 0;
+             op = -1;
         }
 
         switch(op) {
@@ -308,6 +373,7 @@ int main() {
                 excluirContato();
                 break;
             case 6:
+                printf("Salvando e saindo...\n");
                 salvarContatos();
                 break;
             default:
@@ -317,5 +383,11 @@ int main() {
         }
     } while(op != 6);
 
+}
+
+int main() {
+    carregarContatos();
+    atualizarProximoId();
+    menu();
     return 0;
 }
